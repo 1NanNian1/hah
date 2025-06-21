@@ -194,6 +194,31 @@ const upgradeCharacterBtn = document.getElementById('upgrade-character');
 canvas.width = GAME_WIDTH;
 canvas.height = GAME_HEIGHT;
 
+// 事件监听
+startGameBtn.addEventListener('click', () => {
+    // 隐藏开始界面，显示游戏界面
+    startScreen.style.display = 'none';
+    gameScreen.style.display = 'block';
+    
+    // 设置游戏状态
+    gameState = 'playing';
+    
+    // 开始游戏循环
+    gameLoop();
+});
+
+restartGameBtn.addEventListener('click', () => {
+    // 重置游戏状态
+    resetGame();
+    
+    // 隐藏结束界面，显示游戏界面
+    gameOverScreen.style.display = 'none';
+    gameScreen.style.display = 'block';
+    
+    // 开始游戏循环
+    gameLoop();
+});
+
 // 技能类型
 const SKILL_TYPES = {
     speed: { name: "加速", icon: "fa-bolt", unicode: "\uf0e7", color: "#F59E0B", tailwindColor: "text-yellow-400", effect: (char) => { char.speed = char.speed * 2; }, duration: 5000 },
@@ -526,7 +551,9 @@ function updateBullets(timestamp) {
         // 移除超出屏幕的子弹
         if (
             bullet.x < -BULLET_SIZE || 
-            // 原代码未完整，可根据需求补充后续逻辑
+            bullet.x > GAME_WIDTH + BULLET_SIZE ||
+            bullet.y < -BULLET_SIZE ||
+            bullet.y > GAME_HEIGHT + BULLET_SIZE
         ) {
             bullets.splice(i, 1);
         }
