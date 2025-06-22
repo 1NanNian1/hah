@@ -230,24 +230,10 @@ const nextWeaponDamage = document.getElementById('next-weapon-damage');
 const nextWeaponFireRate = document.getElementById('next-weapon-firerate');
 const joystickContainer = document.getElementById('joystick-container');
 const joystickDot = document.getElementById('joystick-dot');
-const shootBtn = document.getElementById('shoot-btn');
 
 // 设置画布尺寸
 canvas.width = GAME_WIDTH;
 canvas.height = GAME_HEIGHT;
-
-// 射击按钮事件
-shootBtn.addEventListener('click', () => {
-    if (character.canShoot && Date.now() - lastShotTime > currentWeapon.fireRate / character.weaponLevel) {
-        shoot();
-        lastShotTime = Date.now();
-        // 射击按钮视觉反馈
-        shootBtn.style.transform = 'scale(0.9)';
-        setTimeout(() => {
-            shootBtn.style.transform = 'scale(1)';
-        }, 100);
-    }
-});
 
 // 事件监听
 startGameBtn.addEventListener('click', () => {
@@ -362,10 +348,51 @@ window.addEventListener('touchend', handleJoystickEnd);
 
 // 技能类型
 const SKILL_TYPES = {
-    speed: { name: "加速", icon: "fa-bolt", unicode: "\uf0e7", color: "#F59E0B", tailwindColor: "text-yellow-400", effect: (char) => { char.speed = char.speed * 2; }, duration: 5000 },
-    heal: { name: "治疗", icon: "fa-heart", unicode: "\uf004", color: "#10B981", tailwindColor: "text-green-400", effect: (char) => { char.health = Math.min(char.health + 30, char.maxHealth); }, duration: 0 },
-    damage: { name: "伤害提升", icon: "fa-bomb", unicode: "\uf1e2", color: "#EF4444", tailwindColor: "text-red-400", effect: (char) => { currentWeapon.damage = currentWeapon.damage * 1.5; }, duration: 5000 },
-    shield: { name: "护盾", icon: "fa-shield-alt", unicode: "\uf3ed", color: "#3B82F6", tailwindColor: "text-blue-400", effect: (char) => { char.health = char.maxHealth; char.shield = true; }, duration: 3000 }
+    speed: { 
+        name: "加速", 
+        icon: "fa-bolt", 
+        unicode: "\uf0e7", 
+        color: "#F59E0B", 
+        tailwindColor: "text-yellow-400", 
+        effect: (char) => { 
+            char.speed = char.baseSpeed * 2; 
+        }, 
+        duration: 5000 
+    },
+    heal: { 
+        name: "治疗", 
+        icon: "fa-heart", 
+        unicode: "\uf004", 
+        color: "#10B981", 
+        tailwindColor: "text-green-400", 
+        effect: (char) => { 
+            char.health = Math.min(char.health + 30, char.maxHealth); 
+        }, 
+        duration: 0 
+    },
+    damage: { 
+        name: "伤害提升", 
+        icon: "fa-bomb", 
+        unicode: "\uf1e2", 
+        color: "#EF4444", 
+        tailwindColor: "text-red-400", 
+        effect: (char) => { 
+            currentWeapon.damage = currentWeapon.damage * 1.5; 
+        }, 
+        duration: 5000 
+    },
+    shield: { 
+        name: "护盾", 
+        icon: "fa-shield-alt", 
+        unicode: "\uf3ed", 
+        color: "#3B82F6", 
+        tailwindColor: "text-blue-400", 
+        effect: (char) => { 
+            char.health = char.maxHealth; 
+            char.shield = true; 
+        }, 
+        duration: 3000 
+    }
 };
 
 // 新增：道具类型
@@ -538,6 +565,23 @@ function updateCharacter(timestamp) {
         }
     }
     
+    // 自动射击逻辑
+    if (character.canShoot && timestamp - lastShotTime > currentWeapon.fireRate / character.weaponLevel) {
+        const nearestEnemy = findNearestEnemy();
+        if (nearestEnemy) {
+            // 计算射击方向（朝向最近敌人）
+            const dx = nearestEnemy.x - character.x;
+            const dy = nearestEnemy.y - character.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance > 0) {
+                character.lastDirection.x = dx / distance;
+                character.lastDirection.y = dy / distance;
+            }
+            shoot();
+            lastShotTime = timestamp;
+        }
+    }
+    
     // 应用技能效果
     activeSkills = activeSkills.filter(skill => {
         if (skill.expireTime > Date.now()) {
@@ -624,14 +668,78 @@ function drawCharacter() {
         : character.direction;
     const weaponAngle = Math.atan2(shootDirection.y, shootDirection.x);
     
-    ctx.beginPath();
-    ctx.moveTo(screenX, screenY);
-    ctx.lineTo(
-        screenX + Math.cos(weaponAngle) * weaponLength,
-        screenY + Math.sin(weaponAngle) * weaponLength
-    );
-    ctx.lineWidth = character.width * 0.1;
-    ctx.stroke();
+    // 武器握把位置（右手）
+    const gripX = screenX + bodyWidth * 0.3;
+    const gripY = screenY - bodyHeight * 0.1;
+    
+    // 根据武器类型绘制不同形象
+    if (character.weapon === 'pistol') {
+        // 手枪：短枪管
+        ctx.lineWidth = character.width * 0.08;
+        ctx.beginPath();
+        ctx.moveTo(gripX, gripY);
+        ctx.lineTo(
+            gripX + Math.cos(weaponAngle) * weaponLength * 0.7,
+            gripY + Math.sin(weaponAngle) * weaponLength * 0.7
+        );
+        ctx.stroke();
+        // 枪身
+        ctx.fillStyle = '#374151';
+        ctx.fillRect(gripX - 2, gripY - 8, 4, 16);
+    } else if (character.weapon === 'bow') {
+        // 弓箭：弧形弓
+        ctx.strokeStyle = '#8B4513';
+        ctx.lineWidth = character.width * 0.06;
+        ctx.beginPath();
+        ctx.arc(gripX, gripY, weaponLength * 0.4, weaponAngle - 0.3, weaponAngle + 0.3);
+        ctx.stroke();
+        // 箭矢
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = character.width * 0.03;
+        ctx.beginPath();
+        ctx.moveTo(gripX, gripY);
+        ctx.lineTo(
+            gripX + Math.cos(weaponAngle) * weaponLength * 0.8,
+            gripY + Math.sin(weaponAngle) * weaponLength * 0.8
+        );
+        ctx.stroke();
+    } else if (character.weapon === 'rifle') {
+        // 步枪：长枪管
+        ctx.lineWidth = character.width * 0.1;
+        ctx.beginPath();
+        ctx.moveTo(gripX, gripY);
+        ctx.lineTo(
+            gripX + Math.cos(weaponAngle) * weaponLength,
+            gripY + Math.sin(weaponAngle) * weaponLength
+        );
+        ctx.stroke();
+        // 枪托
+        ctx.fillStyle = '#374151';
+        ctx.fillRect(gripX - 3, gripY + 5, 6, 12);
+    } else if (character.weapon === 'flamethrower') {
+        // 喷火器：粗管
+        ctx.lineWidth = character.width * 0.15;
+        ctx.beginPath();
+        ctx.moveTo(gripX, gripY);
+        ctx.lineTo(
+            gripX + Math.cos(weaponAngle) * weaponLength * 0.6,
+            gripY + Math.sin(weaponAngle) * weaponLength * 0.6
+        );
+        ctx.stroke();
+        // 燃料罐
+        ctx.fillStyle = '#DC2626';
+        ctx.fillRect(gripX - 8, gripY - 5, 16, 10);
+    } else {
+        // 其他武器：通用绘制
+        ctx.lineWidth = character.width * 0.08;
+        ctx.beginPath();
+        ctx.moveTo(gripX, gripY);
+        ctx.lineTo(
+            gripX + Math.cos(weaponAngle) * weaponLength,
+            gripY + Math.sin(weaponAngle) * weaponLength
+        );
+        ctx.stroke();
+    }
     
     // 生命值条
     drawHealthBar(screenX - character.width / 2, screenY - character.height / 2 - character.width / 2, character.width, 5, character.health, character.maxHealth);
@@ -1542,3 +1650,19 @@ const UPGRADE_PERKS = {
     bulletSpeed: { name: "子弹速度", description: "子弹速度+25%", effect: () => { currentWeapon.bulletSpeed *= 1.25; } },
     critical: { name: "暴击率", description: "15%概率造成双倍伤害", effect: () => { character.criticalChance = (character.criticalChance || 0) + 0.15; } }
 };
+
+// 自动锁定最近敌人
+function findNearestEnemy() {
+    let nearestEnemy = null;
+    let nearestDistance = Infinity;
+    
+    enemies.forEach(enemy => {
+        const distance = Math.hypot(enemy.x - character.x, enemy.y - character.y);
+        if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestEnemy = enemy;
+        }
+    });
+    
+    return nearestEnemy;
+}
