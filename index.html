@@ -121,6 +121,9 @@
                 <button id="skill-2" class="w-16 h-16 bg-dark/50 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center skill-btn" data-skill="heal">
                     <i class="fa-solid fa-heart text-2xl text-green-400"></i>
                 </button>
+                <button id="shoot-btn" class="w-16 h-16 bg-dark/50 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center col-span-2">
+                    <i class="fa-solid fa-crosshairs text-2xl text-red-400"></i>
+                </button>
             </div>
             
             <!-- 武器显示 -->
@@ -134,6 +137,19 @@
                 </div>
             </div>
             
+            <!-- 经验条 -->
+            <div class="absolute top-16 left-1/2 transform -translate-x-1/2 z-10">
+                <div class="bg-dark/70 backdrop-blur-md rounded-lg p-2 shadow-lg">
+                    <div class="flex items-center space-x-2 mb-1">
+                        <i class="fa-solid fa-star text-yellow-400"></i>
+                        <span class="text-sm font-bold">等级: <span id="level-display">1</span></span>
+                    </div>
+                    <div class="w-32 h-2 bg-dark/50 rounded-full overflow-hidden">
+                        <div id="exp-bar" class="h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- 升级按钮 -->
             <button id="upgrade-btn" class="absolute bottom-4 right-4 z-20 bg-accent hover:bg-accent/90 text-dark font-bold py-3 px-6 rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 active:scale-95">
                 <i class="fa-solid fa-up-right-and-down-left-from-center mr-2"></i>升级
@@ -141,28 +157,36 @@
         </div>
 
         <!-- 升级界面 -->
-        <div id="upgrade-screen" class="absolute inset-0 hidden bg-dark/80 backdrop-blur-sm z-40">
-            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-dark rounded-2xl shadow-2xl p-6 w-full max-w-2xl">
+        <div id="upgrade-screen" class="absolute inset-0 hidden bg-dark/80 backdrop-blur-sm z-40 p-4">
+            <div class="w-full h-full bg-dark rounded-2xl shadow-2xl p-6 overflow-y-auto" id="upgrade-content">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-primary">武器升级</h2>
+                    <h2 class="text-2xl font-bold text-primary">军火库</h2>
                     <button id="close-upgrade" class="text-gray-400 hover:text-white">
                         <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
                 </div>
+
+                <div class="text-center mb-6">
+                    <p class="text-lg text-gray-400">当前金币: <span id="upgrade-coins-display" class="font-bold text-accent">0</span></p>
+                </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                     <!-- 武器升级 -->
                     <div class="bg-dark/50 rounded-xl p-4 border border-gray-700">
                         <h3 class="text-lg font-semibold mb-3 flex items-center">
                             <i id="upgrade-weapon-icon" class="fa-solid fa-handgun text-primary mr-2"></i>
-                            武器升级
+                            <span id="upgrade-weapon-name">武器</span>升级
                         </h3>
-                        <p class="text-sm text-gray-400 mb-4">提升武器伤害和射速</p>
-                        <div class="flex justify-between items-center mb-3">
+                        <p class="text-sm text-gray-400 mb-4">提升当前装备武器的性能</p>
+                        <div class="flex justify-between items-center mb-1 text-sm">
                             <span>当前等级: <span id="current-weapon-level">1</span></span>
-                            <span>所需金币: <span id="weapon-upgrade-cost">50</span></span>
+                            <span>下级伤害: <span id="next-weapon-damage">0</span></span>
                         </div>
-                        <button id="upgrade-weapon" class="w-full bg-primary/20 hover:bg-primary/30 text-primary font-medium py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <div class="flex justify-between items-center mb-3 text-sm">
+                            <span>金币花费: <span id="weapon-upgrade-cost">50</span></span>
+                            <span>下级射速: <span id="next-weapon-firerate">0</span></span>
+                        </div>
+                        <button id="upgrade-weapon-btn" class="w-full bg-primary/20 hover:bg-primary/30 text-primary font-medium py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
                             升级
                         </button>
                     </div>
@@ -171,14 +195,14 @@
                     <div class="bg-dark/50 rounded-xl p-4 border border-gray-700">
                         <h3 class="text-lg font-semibold mb-3 flex items-center">
                             <i class="fa-solid fa-bolt text-yellow-400 mr-2"></i>
-                            技能升级
+                            被动升级
                         </h3>
-                        <p class="text-sm text-gray-400 mb-4">减少技能冷却时间</p>
+                        <p class="text-sm text-gray-400 mb-4">减少所有技能的冷却时间</p>
                         <div class="flex justify-between items-center mb-3">
                             <span>当前等级: <span id="current-skill-level">1</span></span>
                             <span>所需金币: <span id="skill-upgrade-cost">30</span></span>
                         </div>
-                        <button id="upgrade-skill" class="w-full bg-primary/20 hover:bg-primary/30 text-primary font-medium py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <button id="upgrade-skill-btn" class="w-full bg-primary/20 hover:bg-primary/30 text-primary font-medium py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
                             升级
                         </button>
                     </div>
@@ -189,19 +213,23 @@
                             <i class="fa-solid fa-shield-alt text-accent mr-2"></i>
                             角色升级
                         </h3>
-                        <p class="text-sm text-gray-400 mb-4">提升角色生命值和移动速度</p>
+                        <p class="text-sm text-gray-400 mb-4">提升角色最大生命值和速度</p>
                         <div class="flex justify-between items-center mb-3">
                             <span>当前等级: <span id="current-character-level">1</span></span>
                             <span>所需金币: <span id="character-upgrade-cost">40</span></span>
                         </div>
-                        <button id="upgrade-character" class="w-full bg-primary/20 hover:bg-primary/30 text-primary font-medium py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <button id="upgrade-character-btn" class="w-full bg-primary/20 hover:bg-primary/30 text-primary font-medium py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
                             升级
                         </button>
                     </div>
                 </div>
-                
-                <div class="text-center">
-                    <p class="text-sm text-gray-400 mb-2">当前金币: <span id="current-coins" class="font-bold text-primary">0</span></p>
+
+                <!-- 武器商店 -->
+                <div>
+                    <h3 class="text-xl font-bold text-secondary mb-4">武器商店</h3>
+                    <div id="weapon-shop-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        <!-- Weapon cards dynamically inserted here -->
+                    </div>
                 </div>
             </div>
         </div>
